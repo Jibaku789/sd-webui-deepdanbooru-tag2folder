@@ -1,0 +1,18 @@
+{
+  "ishtar": {
+    "OR": [
+      "ishtar_(fate)"
+    ]
+  },
+  "eresh": {
+    "OR": [
+      "partial:eresh"
+    ]
+  },
+  "frieren": {
+    "AND": [
+      "green_eyes",
+      "elf"
+    ]
+  }
+}
