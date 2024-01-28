@@ -93,16 +93,16 @@ class DeepDanbooruTag2FolderScript():
             with gr.Row():
 
                 with gr.Column(scale=1, elem_classes="source-image-col"):
-                    self.source_folder = gr.Textbox(value="", label="Source Folder", elem_id="source_folder")
-                    self.target_folder = gr.Textbox(value="", label="Target Folder", elem_id="target_folder")
-                    self.auto_type = gr.Dropdown(["None", "Character", "Anime"], value="None", label="Automatic Type", elem_id="auto_type")
-                    self.threshold = gr.Number(value=0.5, label="Threshold", elem_id="threshold", minimum=0, maximum=1)
+                    self.source_folder = gr.Textbox(value="", label="Source Folder", elem_id="deepdanboru_tag2folder_source_folder")
+                    self.target_folder = gr.Textbox(value="", label="Target Folder", elem_id="deepdanboru_tag2folder_target_folder")
+                    self.auto_type = gr.Dropdown(["None", "Character", "Anime"], value="None", label="Automatic Type", elem_id="deepdanboru_tag2folder_auto_type")
+                    self.threshold = gr.Number(value=0.5, label="Threshold", elem_id="deepdanboru_tag2folder_threshold", minimum=0, maximum=1)
 
                 with gr.Column(scale=1, elem_classes="other elements"):
-                    self.rules = gr.Textbox(value=json.dumps(sample, indent=True), lines=10, label="Rules", elem_id="rules_json")
+                    self.rules = gr.Textbox(value=json.dumps(sample, indent=True), lines=10, label="Rules", elem_id="deepdanboru_tag2folder_rules_json")
 
             with gr.Row():
-                self.process_btn = gr.Button(value="Process", elem_id="process_btn")
+                self.process_btn = gr.Button(value="Process", elem_id="deepdanboru_tag2folder_process_btn")
 
             self.process_btn.click(
                 self.ui_click,
