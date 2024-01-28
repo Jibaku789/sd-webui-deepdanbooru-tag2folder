@@ -1,7 +1,7 @@
 """
     @author: Jibaku789
-    @version: 1.0
-    @date: December 2023
+    @version: 1.1
+    @date: January 2023
 """
 
 import gradio as gr
