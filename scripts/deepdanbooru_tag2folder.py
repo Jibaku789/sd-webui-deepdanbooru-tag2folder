@@ -11,6 +11,7 @@ import torch
 import numpy as np
 import json
 import re
+import shlex
 from PIL import Image
 
 from modules import script_callbacks
@@ -67,11 +68,6 @@ class DeepDanbooruWrapper:
 
         return probability_dict
 
-
-def element_id_prefix(element_id):
-    return f'deepdanboru_tag2folder_{element_id}'
-
-
 class DeepDanbooruTag2FolderScript():
 
     def __init__(self):
@@ -83,6 +79,11 @@ class DeepDanbooruTag2FolderScript():
         self.auto_type = None
         self.process_btn = None
 
+        self.csv_info = []
+        with open(os.path.join(__file__, "..", "danbooru.csv"), "r", encoding='utf8') as _f:
+            for line in _f.readlines():
+                self.csv_info.append(shlex.split(line.replace(",", " ").replace("'", "")))
+
     def on_ui_tabs(self):
 
         with gr.Blocks(analytics_enabled=False) as ui_component:
@@ -92,16 +93,16 @@ class DeepDanbooruTag2FolderScript():
             with gr.Row():
 
                 with gr.Column(scale=1, elem_classes="source-image-col"):
-                    self.source_folder = gr.Textbox(value="", label="Source Folder", elem_id=element_id_prefix("source_folder"))
-                    self.target_folder = gr.Textbox(value="", label="Target Folder", elem_id=element_id_prefix("target_folder"))
-                    self.auto_type = gr.Dropdown(["None", "Character", "Anime"], value="None", label="Automatic Type", elem_id=element_id_prefix("auto_type"))
-                    self.threshold = gr.Number(value=0.5, label="Threshold", elem_id=element_id_prefix("threshold"), minimum=0, maximum=1)
+                    self.source_folder = gr.Textbox(value="", label="Source Folder", elem_id="source_folder")
+                    self.target_folder = gr.Textbox(value="", label="Target Folder", elem_id="target_folder")
+                    self.auto_type = gr.Dropdown(["None", "Character", "Anime"], value="None", label="Automatic Type", elem_id="auto_type")
+                    self.threshold = gr.Number(value=0.5, label="Threshold", elem_id="threshold", minimum=0, maximum=1)
 
                 with gr.Column(scale=1, elem_classes="other elements"):
-                    self.rules = gr.Textbox(value=json.dumps(sample, indent=True), lines=10, label="Rules", elem_id=element_id_prefix("rules_json"))
+                    self.rules = gr.Textbox(value=json.dumps(sample, indent=True), lines=10, label="Rules", elem_id="rules_json")
 
             with gr.Row():
-                self.process_btn = gr.Button(value="Process", elem_id=element_id_prefix("process_btn"))
+                self.process_btn = gr.Button(value="Process", elem_id="process_btn")
 
             self.process_btn.click(
                 self.ui_click,
@@ -115,6 +116,27 @@ class DeepDanbooruTag2FolderScript():
             )
 
             return [(ui_component, "DeepDanboru Tag2Folder", "deepdanboru_tag2folder_tab")]
+
+    def my_split(self, my_str, token_left="(", token_right=")"):
+
+        matched = []
+        tmp = ""
+        to_add = False
+
+        for s in my_str:
+
+            if s == token_right:
+                to_add = False
+                matched.append(tmp)
+                tmp = ""
+
+            if to_add:
+                tmp += s
+
+            if s == token_left:
+                to_add = True
+
+        return matched
 
 
     def ui_click(self, source_folder, target_folder, threshold, rules, auto_type):
@@ -212,15 +234,34 @@ class DeepDanbooruTag2FolderScript():
                         if auto_type != "None":
                             for tag in model_tags:
 
-                                if auto_type == "Anime":
-                                    match = re.search("\((.*)\)", tag)
-                                    if match:
-                                        new_folder = os.path.join(target_folder, match.group(1))
-                                        break
+                                if auto_type in ["Anime", "Character"]:
+                                    model_tag_clean = tag.replace("_", " ")
+                                    found_in_csv = False
 
-                                elif auto_type == "Character":
-                                    if "(" in tag:
-                                        new_folder = os.path.join(target_folder, tag)
+                                    for csv_tag in self.csv_info:
+                                        csv_tag_clean = csv_tag[0].replace("_", " ")
+                                        if model_tag_clean == csv_tag_clean:
+
+                                            if csv_tag[1] == "4":
+
+                                                if auto_type == "Character":
+                                                    new_folder = os.path.join(target_folder, csv_tag_clean)
+                                                    found_in_csv = True
+                                                    break
+
+                                                else: #Anime
+                                                    if "(" in csv_tag_clean:
+                                                        anime_name = self.my_split(" ".join(csv_tag))
+                                                        new_folder = os.path.join(target_folder, anime_name[-1])
+                                                        found_in_csv = True
+                                                        break
+
+                                            if csv_tag[1] == "3" and auto_type == "Anime":
+                                                new_folder = os.path.join(target_folder, csv_tag_clean)
+                                                found_in_csv = True
+                                                break
+
+                                    if found_in_csv:
                                         break
 
                         if not os.path.exists(new_folder):
@@ -237,6 +278,7 @@ class DeepDanbooruTag2FolderScript():
 
             except Exception as e:
                 print(e)
+                raise
 
         # Save metrics
         metrics = dict(sorted(metrics.items(), key=lambda x: -x[1]))
