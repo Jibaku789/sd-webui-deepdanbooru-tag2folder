@@ -2,6 +2,9 @@
 
 Using this script you can move images using deepdanbooru classification
 
+Version 1.1
+* Add better detection of Anime and Character tags
+
 Version 1.0
 * Add initial commit and create repository
 
